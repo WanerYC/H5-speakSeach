@@ -1,177 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>语音搜索</title>
-</head>
-<body>
-   
- 
-<form class="container js-ajax-form" role="form" method="post" id="msg_form" onsubmit="return false;">
-  <input type="hidden" name="doctor_id" value="1" />
-    <div class="fill-text">
-      <dl>
-          <dt>详细病情<span>(支持语音输入识别)</span></dt>
-          <dd>
-              <textarea name="msg" id="msg" placeholder="请输入详细病情，语音输入仅支持一次性输入，再次输入将覆盖之前内容。"></textarea>
-              <div class="tape">
-                  <span class="hear" id="hear" onclick="play()" ><input readonly type="hidden" name="localId"><b></b>'s<i></i></span>
-                  <span class="say" id="talk_btn"></span>
-              </div>
-          </dd>
-      </dl>
-    </div>
-    <div class="fill-button"><input type="submit" id="submit" value="发送留言"/></div>
-</form>
-<!-- 语音识别 start -->
-<div class="sound-recording">
-    <dl>
-        <dt><i></i></dt>
-        <dd>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-        </dd>
-    </dl>
-    <p>2秒内找到合适医生</p>
-</div>
-<script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
-<script>
-  wx.ready(function(){
-    alert('sdasd ');
-    var START = null;   //开始时间
-    var END = null; //最后时间
-    var timeout = undefined;    //定时器  
-    var state = 0;  //状态
-    function showRecording() {
-        $(".sound-recording").show();//显示录音
-        //span的width随机变化
-        setInterval(function (){
-            $(".sound-recording dd span").each(function (){
-                $(this).width(48*Math.random() + 'px');
-            });
-        },200)
-        clearTimeout(timeout);
-        state = 0;  
-        timeout = setTimeout(function() {  
-            state = 1;  
-        }, 1000);
-    }
-    function stopRecording() {
-        $(".sound-recording").hide();//关闭录音
-        clearTimeout(timeout);  
-        state = 0;  
-    }
-    $("#talk_btn").on("touchstart", function (event) {  
-        event.preventDefault();
-        START = new Date().getTime();
-        wx.startRecord({
-            success: function(){
-                recordTimer = setTimeout(function(){
-                    var longTime = new Date().getTime();
-                    if(longTime - START > 100){
-                        showRecording();
-                    }
-                    wx.startRecord({
-                        success: function(){
-                            localStorage.rainAllowRecord = 'true';
-                        }
-                    });
-                },300);
-            },
-            cancel: function () {
-                stopRecording();
-                alert('用户拒绝授权录音');
-            }
-        });
-    });
-    //取消触摸
-    $('#talk_btn').on('touchcancel', function(event){
-        stopRecording();
-        wx.stopRecord({
-            success: function (res) {
-                clearTimeout(recordTimer);
-            },
-            fail: function (res) {
-            }
-        });
-    })      
-    $("#talk_btn").on("touchend", function (event) { 
-        stopRecording();
-        event.preventDefault();
-        END = new Date().getTime();
-        wx.stopRecord({
-            success: function (res) {
-                if((END - START) < 300){
-                    END = 0;
-                    START = 0;
-                    //小于300ms，不录音
-                    clearTimeout(recordTimer);
-                    return;
-                }else{
-                    $("#hear").css("display","inline-block");
-                }
-                // play(res.localId);
-                translateVoice(res.localId);
-                var timeLength = ((END-START)/1000).toFixed(1);  //时间差
-                $("#hear input").val(res.localId);
-                $("#hear b").text(timeLength);
-            },
-            fail: function (res) {                                                                                        
-                alert(JSON.stringify(res));
-            }
-        });
-    }); 
-    //播放语音
-    function play() {
-        var localId = $("#hear input").val();
-        $(".hear").addClass("cur");
-        wx.playVoice({
-            localId: localId
-        })
-        //语音播放结束的回调
-        wx.onVoicePlayEnd({
-            success: function (res) {
-                $(".hear").removeClass("cur");
-                //var localId = res.localId; // 返回音频的本地ID
-            }
-        });
-    }
-    function translateVoice(localId) {
-        wx.translateVoice({
-            localId: localId, // 需要识别的音频的本地Id，由录音相关接口获得
-            isShowProgressTips: 1, // 默认为1，显示进度提示
-            success: function (res) {
-                $('textarea[name=msg]').val(res.translateResult); // 语音识别的结果
-            }
-        });
-    }
-    function uploadVoice() {
-        var serverId = '';
-        var localId = $("#hear input").val();
-        if (localId != '') {
-            wx.uploadVoice({
-                localId: localId, // 需要上传的音频的本地ID，由stopRecord接口获得
-                isShowProgressTips: 1, // 默认为1，显示进度提示
-                    success: function (res) {
-                    serverId = res.serverId; // 返回音频的服务器端ID
-                }
-            });
-        }
-        return serverId;
-    }
-    $("#hear i").on("click", function (){
-        $("#hear input").val('');
-        $(this).parent().hide();
-    })
-  });
-
-
-</script>
-</body>
+<html>
+  <head>
+    <title>HTML5获取麦克风音频,输出到扬声器</title>
+	<meta charset="UTF-8">
+    <meta name="keywords" content="keyword1,keyword2,keyword3">
+    <meta name="description" content="this is my page">
+    <meta name="content-type" content="text/html; charset=UTF-8">
+    <script type="text/javascript">
+		var audioCtx;
+		try
+		{
+			audioCtx=new (window.AudioContext || window.webkitAudioContext)();
+		}
+		catch(e)
+		{
+			console.log("Your browser does not support AudioContext!");
+		}
+    navigator.getUserMedia=(navigator.getUserMedia || navigator.webkitGetUserMedia || 
+								navigator.mozGetUserMedia || navigator.msGetUserMedia);
+		if(navigator.getUserMedia) 
+		{
+			navigator.getUserMedia(
+      		{
+      			audio:true,
+            // video: { width: 1280, height: 720 }
+      		},
+      		function(stream)
+      		{
+      			var source=audioCtx.createMediaStreamSource(stream);
+          		var biquadFilter=audioCtx.createBiquadFilter();
+          		biquadFilter.type="lowshelf";
+          		biquadFilter.frequency.value=1000;
+          		biquadFilter.gain.value=25;
+          		source.connect(biquadFilter);
+          		biquadFilter.connect(audioCtx.destination);
+         	},
+      		function(err)
+      		{
+      			console.log("The following gUM error occured: "+err);
+      		});
+      	}
+      	else 
+      	{
+      		console.log("getUserMedia not supported on your browser!");
+      	}
+    </script>
+  </head>
+  <body>
+    This is my HTML page. <br>
+  </body>
 </html>
