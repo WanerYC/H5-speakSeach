@@ -1,53 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>H5 语音 / 录音功能</title>
+    <style>
+        .box {
+            position: relative;
+        }
+        img {
+            width: 20px;
+        }
+        .imgbox {
+            position: absolute;
+            top: 3px;
+            left: 149px;
+        }
+    </style>
 </head>
 <body>
-  <div>
-      <input id="microphone" type="button" />啦啦啦
-  </div>
-  
-  <script>
-    var recorder;
-        var btnElem=document.getElementById("microphone");//获取ID
-        function initEvent() {
-            btnElem.addEventListener("touchstart", function(event) {
-                //event.preventDefault();//阻止浏览器默认行为
-                HZRecorder.get(function (rec) {
-                    recorder = rec;
-                    recorder.start();
-                });
-                      });
-            btnElem.addEventListener("touchend", function(event) {
-                //event.preventDefault();
-                HZRecorder.get(function (rec) {
-                     recorder.stop();
-                })
-                recorder.upload("/upload", function (state, e) {
-                    switch (state) {
-                        case 'uploading':
-                            //var percentComplete = Math.round(e.loaded * 100 / e.total) + '%';
-                            break;
-                        case 'ok':
-                            //alert(e.target.responseText);
-                            alert("上传成功");
-                            break;
-                        case 'error':
-                            alert("上传失败");
-                            break;
-                        case 'cancel':
-                            alert("上传被取消");
-                            break;
-                    }
-                });
-                            });
-        };
-        initEvent();
-  </script>
-  <script src="./js/01.js"></script>
+    <div class="box">
+        <input type="text"> 
+        <span>搜索</span>
+        <div class="imgbox">
+            <img src="./img/yuyin.png" alt="">
+        </div>
+    </div>
+    <hr>
+    <audio></audio>
+    <button class="recorderControl">录制</button>
+    <button class="download">下载</button>
+    <hr>
+    <input type="text" x-webkit-speech x-webkit-grammar="builtin:translate" onwebkitspeechchange=”alert(this.value)” >这是语音属性控件
+    <script>
+        var imgbox = document.getElementsByClassName('imgbox')[0];
+        navigator.getUserMedia = navigator.getUserMedia ||
+                        navigator.webkitGetUserMedia ||
+                        navigator.mozGetUserMedia;
+        imgbox.onclick = function () {
+            // alert('sdsdf')
+
+            if (navigator.getUserMedia) {
+            navigator.getUserMedia(
+                { audio: true},
+                function(stream) {
+                    var video = document.querySelector('video');
+                    video.src = window.URL.createObjectURL(stream);
+                    video.onloadedmetadata = function(e) {
+                    video.play();
+                    };
+                },
+                function(err) {
+                    console.log("The following error occurred: " + err.name);
+                }
+            );
+            } else {
+            console.log("getUserMedia not supported");
+            }
+        }
+        
+    </script>
+    <script>
+        var promise=navigator.mediaDevices.getUserMedia({audio:true});
+        promise.then(function(stream){
+            console.log(stream)
+            var audio=document.querySelector("audio")
+            //把获取的音频流放到界面的audio容器里
+            audio.src=URL.createObjectURL(stream);
+            var recorder=new MediaRecorder(stream);
+
+            var recorderControl=document.querySelector(".recorderControl");
+            recorderControl.onclick=function(){
+                this.textContent==="录制"?audio.play():audio.pause();
+                this.textContent==="录制"?recorder.start():recorder.stop();
+                this.textContent=this.textContent==="录制"?"停止":"录制";
+            }
+            
+            //得到有效数据  收集数据
+            var buffers=null;
+            var download=document.querySelector(".download");
+            recorder.ondataavailable=function(event){
+                //收集媒体设备 获得到的 可以使用的 媒体流数据
+                console.log(event.data)
+                buffers=event.data
+            }
+
+            recorder.onstop=function () {
+                //停止录制时触发函数
+                var url=URL.createObjectURL(buffers);
+                console.log(url)
+                download.href=url;
+                buffers=null;
+            }
+
+        });
+
+
+        //获得到有效数据的时候调用
+        promise.catch(function(error){
+        console.log(error)
+        });
+    </script>
 </body>
 </html>

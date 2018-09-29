@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <div class="row">
+
+    <form id="form1" runat="server">
+      <div>
+
+        <input id="conn" type="button" value="连接" />
+        <input id="close" type="button" value="关闭" />
+        <span id="tips"></span>
+        <input id="content" type="text" />
+        <input id="send" type="button" value="发送" />
+      </div>
+    </form>
+
+
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+  <script>
+    var ws;
+    $().ready(function () {
+      // $('#conn').click(function () {
+        var host = 'ws://' + window.location.hostname + ':' + window.location.port + '/imgpush/01'
+        console.log(host)
+        ws = new WebSocket(host);
+        $('#tips').text('正在连接');
+        ws.onopen = function () {
+          $('#tips').text('已经连接');
+          console.log('websocket open')
+        }
+        ws.onmessage = function (evt) {
+          console.log(evt)
+          $('#tips').text(evt.data);
+        }
+        ws.onerror = function (evt) {
+          $('#tips').text(JSON.stringify(evt));
+        }
+        ws.onclose = function () {
+          $('#tips').text('已经关闭');
+        }
+      // });
+
+      $('#close').click(function () {
+        ws.close();
+      });
+
+      $('#send').click(function () {
+        if (ws.readyState == WebSocket.OPEN) {
+          ws.send($('#content').val());
+        } else {
+          $('#tips').text('连接已经关闭');
+        }
+      });
+
+    });
+  </script>
+</body>
+
+</html>
